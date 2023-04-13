@@ -1,0 +1,1533 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AreaMedias {
+  created_at    DateTime    @db.Timestamptz(6)
+  updated_at    DateTime    @db.Timestamptz(6)
+  deleted_at    DateTime?   @db.Timestamptz(6)
+  area_id       Int
+  attachment_id Int
+  Areas         Areas       @relation(fields: [area_id], references: [id], onDelete: Cascade)
+  Attachments   Attachments @relation(fields: [attachment_id], references: [id], onDelete: Cascade)
+
+  @@id([area_id, attachment_id])
+}
+
+model AreaRegInformations {
+  answer           String?
+  created_at       DateTime      @db.Timestamptz(6)
+  updated_at       DateTime      @db.Timestamptz(6)
+  deleted_at       DateTime?     @db.Timestamptz(6)
+  area_id          Int
+  insp_question_id Int
+  Areas            Areas         @relation(fields: [area_id], references: [id], onDelete: Cascade)
+  InspQuestions    InspQuestions @relation(fields: [insp_question_id], references: [id], onDelete: Cascade)
+
+  @@id([area_id, insp_question_id])
+}
+
+model Areas {
+  id                       Int                   @id @default(autoincrement())
+  name                     String                @db.VarChar(255)
+  description              String?
+  has_damage               Boolean               @default(false)
+  measurements             Json[]                @db.Json
+  created_at               DateTime              @db.Timestamptz(6)
+  updated_at               DateTime              @db.Timestamptz(6)
+  deleted_at               DateTime?             @db.Timestamptz(6)
+  inspection_id            Int?
+  subject_category_pair_id Int?
+  AreaMedias               AreaMedias[]
+  AreaRegInformations      AreaRegInformations[]
+  Inspections              Inspections?          @relation(fields: [inspection_id], references: [id])
+  InspSubjCategPairs       InspSubjCategPairs?   @relation(fields: [subject_category_pair_id], references: [id])
+}
+
+model AssignmentStatuses {
+  id                   Int           @id @default(autoincrement())
+  code                 String        @db.VarChar(255)
+  caption              String        @db.VarChar(255)
+  percentage_of_effort Decimal       @db.Decimal
+  created_at           DateTime      @db.Timestamptz(6)
+  updated_at           DateTime      @db.Timestamptz(6)
+  deleted_at           DateTime?     @db.Timestamptz(6)
+  Assignments          Assignments[]
+}
+
+model AssignmentTeamMembers {
+  id            Int          @id @default(autoincrement())
+  meta          Json?
+  created_at    DateTime     @db.Timestamptz(6)
+  updated_at    DateTime     @db.Timestamptz(6)
+  deleted_at    DateTime?    @db.Timestamptz(6)
+  assignment_id Int?
+  contact_id    Int?
+  Assignments   Assignments? @relation(fields: [assignment_id], references: [id])
+  Contacts      Contacts?    @relation(fields: [contact_id], references: [id])
+  Works         Works[]
+}
+
+model AssignmentTypeModifiers {
+  id                             Int                              @id @default(autoincrement())
+  code                           String                           @unique @db.VarChar(255)
+  name                           String                           @unique @db.VarChar(255)
+  description                    String?                          @db.VarChar(255)
+  created_at                     DateTime                         @db.Timestamptz(6)
+  updated_at                     DateTime                         @db.Timestamptz(6)
+  deleted_at                     DateTime?                        @db.Timestamptz(6)
+  CarrierAssignmentTypeModifiers CarrierAssignmentTypeModifiers[]
+}
+
+model AssignmentTypes {
+  id                     Int                      @id @default(autoincrement())
+  code                   String                   @unique @db.VarChar(255)
+  name                   String                   @unique @db.VarChar(255)
+  description            String?                  @db.VarChar(255)
+  created_at             DateTime                 @db.Timestamptz(6)
+  updated_at             DateTime                 @db.Timestamptz(6)
+  deleted_at             DateTime?                @db.Timestamptz(6)
+  CarrierAssignmentTypes CarrierAssignmentTypes[]
+}
+
+model Assignments {
+  id                                                      Int                             @id @default(autoincrement())
+  active                                                  Boolean                         @default(true)
+  process_flow                                            Json?
+  meta                                                    Json?
+  created_at                                              DateTime                        @db.Timestamptz(6)
+  updated_at                                              DateTime                        @db.Timestamptz(6)
+  deleted_at                                              DateTime?                       @db.Timestamptz(6)
+  case_id                                                 Int?
+  type_id                                                 Int?
+  type_modifier_id                                        Int?
+  status_id                                               Int?
+  assigner_organization_id                                Int?
+  assigned_organization_id                                Int?
+  AssignmentTeamMembers                                   AssignmentTeamMembers[]
+  Contacts_Assignments_assigned_organization_idToContacts Contacts?                       @relation("Assignments_assigned_organization_idToContacts", fields: [assigned_organization_id], references: [id])
+  Contacts_Assignments_assigner_organization_idToContacts Contacts?                       @relation("Assignments_assigner_organization_idToContacts", fields: [assigner_organization_id], references: [id])
+  Cases                                                   Cases?                          @relation(fields: [case_id], references: [id])
+  AssignmentStatuses                                      AssignmentStatuses?             @relation(fields: [status_id], references: [id])
+  CarrierAssignmentTypes                                  CarrierAssignmentTypes?         @relation(fields: [type_id], references: [id])
+  CarrierAssignmentTypeModifiers                          CarrierAssignmentTypeModifiers? @relation(fields: [type_modifier_id], references: [id])
+  Works                                                   Works[]
+}
+
+model Attachments {
+  id              Int                              @id @default(autoincrement())
+  title           String                           @db.VarChar(255)
+  description     String?
+  filename        String                           @db.VarChar(255)
+  status          enum_Attachments_status
+  attachment_type enum_Attachments_attachment_type
+  url             String?                          @db.VarChar(255)
+  thumbnail       String?                          @db.VarChar(255)
+  build_guid      String?                          @db.VarChar(255)
+  meta            Json?
+  created_at      DateTime                         @db.Timestamptz(6)
+  updated_at      DateTime                         @db.Timestamptz(6)
+  deleted_at      DateTime?                        @db.Timestamptz(6)
+  claim_id        Int?
+  area_id         Int?
+  voucher_id      Int?
+  AreaMedias      AreaMedias[]
+  Claims          Claims?                          @relation(fields: [claim_id], references: [id])
+  Vouchers        Vouchers?                        @relation(fields: [voucher_id], references: [id])
+}
+
+model BusinessContacts {
+  created_at  DateTime   @db.Timestamptz(6)
+  updated_at  DateTime   @db.Timestamptz(6)
+  deleted_at  DateTime?  @db.Timestamptz(6)
+  business_id Int
+  contact_id  Int
+  Businesses  Businesses @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  Contacts    Contacts   @relation(fields: [contact_id], references: [id], onDelete: Cascade)
+
+  @@id([business_id, contact_id])
+}
+
+model Businesses {
+  id               Int                @id @default(autoincrement())
+  tags             Json?
+  meta             Json?
+  name             String             @db.VarChar(255)
+  legal_name       String             @db.VarChar(255)
+  alternative_name String?            @db.VarChar(255)
+  sites            String?            @db.VarChar(255)
+  created_at       DateTime           @db.Timestamptz(6)
+  updated_at       DateTime           @db.Timestamptz(6)
+  deleted_at       DateTime?          @db.Timestamptz(6)
+  contact_id       Int?
+  BusinessContacts BusinessContacts[]
+  Contacts         Contacts?          @relation(fields: [contact_id], references: [id])
+}
+
+model CarrierAssignmentTypeModifiers {
+  id                          Int                           @id @default(autoincrement())
+  active                      Boolean                       @default(true)
+  seq                         Int
+  created_at                  DateTime                      @db.Timestamptz(6)
+  updated_at                  DateTime                      @db.Timestamptz(6)
+  deleted_at                  DateTime?                     @db.Timestamptz(6)
+  carrier_assignment_type_id  Int?
+  type_modifier_entity_id     Int?
+  Assignments                 Assignments[]
+  AssignmentTypeModifiers     AssignmentTypeModifiers?      @relation(fields: [type_modifier_entity_id], references: [id], map: "CarrierAssignmentTypeModifiers_assignment_type_modifier_id_fkey")
+  CarrierAssignmentTypes      CarrierAssignmentTypes?       @relation(fields: [carrier_assignment_type_id], references: [id])
+  CarrierProcessFlowScenarios CarrierProcessFlowScenarios[]
+
+  @@unique([carrier_assignment_type_id, type_modifier_entity_id], map: "CarrierAssignmentTypeModifiers_unique_pair")
+}
+
+model CarrierAssignmentTypes {
+  id                             Int                              @id @default(autoincrement())
+  active                         Boolean                          @default(true)
+  seq                            Int
+  created_at                     DateTime                         @db.Timestamptz(6)
+  updated_at                     DateTime                         @db.Timestamptz(6)
+  deleted_at                     DateTime?                        @db.Timestamptz(6)
+  carrier_case_type_id           Int?
+  type_entity_id                 Int?
+  Assignments                    Assignments[]
+  CarrierAssignmentTypeModifiers CarrierAssignmentTypeModifiers[]
+  AssignmentTypes                AssignmentTypes?                 @relation(fields: [type_entity_id], references: [id], map: "CarrierAssignmentTypes_assignment_type_id_fkey")
+  CarrierCaseTypes               CarrierCaseTypes?                @relation(fields: [carrier_case_type_id], references: [id])
+  CarrierProcessFlowScenarios    CarrierProcessFlowScenarios[]
+
+  @@unique([carrier_case_type_id, type_entity_id], map: "CarrierAssignmentTypes_unique_pair")
+}
+
+model CarrierCaseTypes {
+  id                          Int                           @id @default(autoincrement())
+  active                      Boolean                       @default(true)
+  seq                         Int
+  created_at                  DateTime                      @db.Timestamptz(6)
+  updated_at                  DateTime                      @db.Timestamptz(6)
+  deleted_at                  DateTime?                     @db.Timestamptz(6)
+  carrier_id                  Int?
+  type_entity_id              Int?
+  CarrierAssignmentTypes      CarrierAssignmentTypes[]
+  Carriers                    Carriers?                     @relation(fields: [carrier_id], references: [id])
+  CaseTypes                   CaseTypes?                    @relation(fields: [type_entity_id], references: [id], map: "CarrierCaseTypes_case_type_id_fkey")
+  CarrierProcessFlowScenarios CarrierProcessFlowScenarios[]
+  Cases                       Cases[]
+
+  @@unique([carrier_id, type_entity_id], map: "CarrierCaseTypes_unique_pair")
+}
+
+model CarrierLineOfBusiness {
+  created_at          DateTime         @db.Timestamptz(6)
+  updated_at          DateTime         @db.Timestamptz(6)
+  carrier_id          Int
+  line_of_business_id Int
+  Carriers            Carriers         @relation(fields: [carrier_id], references: [id], onDelete: Cascade)
+  LineOfBusinesses    LineOfBusinesses @relation(fields: [line_of_business_id], references: [id], onDelete: Cascade)
+
+  @@id([carrier_id, line_of_business_id])
+}
+
+model CarrierProcessFlowScenarios {
+  id                                  Int                             @id(map: "CarrierProcessFlowScenarios_pkey_1") @default(autoincrement())
+  effective_at                        DateTime                        @db.Timestamptz(6)
+  created_at                          DateTime                        @db.Timestamptz(6)
+  updated_at                          DateTime                        @db.Timestamptz(6)
+  deleted_at                          DateTime?                       @db.Timestamptz(6)
+  active                              Boolean
+  caption                             String?                         @db.VarChar(255)
+  description                         String
+  meta                                Json?
+  event                               Json?
+  conditions                          Json?
+  carrier_flow_id                     Int?
+  carrier_lob_id                      Int?
+  carrier_case_type_id                Int?
+  carrier_assignment_type_id          Int?
+  carrier_assignment_type_modifier_id Int?
+  CarrierAssignmentTypes              CarrierAssignmentTypes?         @relation(fields: [carrier_assignment_type_id], references: [id])
+  CarrierAssignmentTypeModifiers      CarrierAssignmentTypeModifiers? @relation(fields: [carrier_assignment_type_modifier_id], references: [id], map: "CarrierProcessFlowScenarios_carrier_assignment_type_modifier_id")
+  CarrierCaseTypes                    CarrierCaseTypes?               @relation(fields: [carrier_case_type_id], references: [id])
+  CarrierProcessFlows                 CarrierProcessFlows?            @relation(fields: [carrier_flow_id], references: [id])
+  LineOfBusinesses                    LineOfBusinesses?               @relation(fields: [carrier_lob_id], references: [id])
+}
+
+model CarrierProcessFlows {
+  id                          Int                           @id(map: "CarrierProcessFlows_pkey_1") @default(autoincrement())
+  effective_at                DateTime                      @db.Timestamptz(6)
+  created_at                  DateTime                      @db.Timestamptz(6)
+  updated_at                  DateTime                      @db.Timestamptz(6)
+  deleted_at                  DateTime?                     @db.Timestamptz(6)
+  active                      Boolean
+  flow_id                     Int?
+  carrier_id                  Int?
+  facts                       Json?
+  meta                        Json?
+  CarrierProcessFlowScenarios CarrierProcessFlowScenarios[]
+  Carriers                    Carriers?                     @relation(fields: [carrier_id], references: [id])
+  ProcessFlows                ProcessFlows?                 @relation(fields: [flow_id], references: [id])
+}
+
+model CarrierVendorPreferences {
+  preference_level Int      @default(0)
+  for_specialities Int[]    @default([])
+  created_at       DateTime @db.Timestamptz(6)
+  updated_at       DateTime @db.Timestamptz(6)
+  carrier_id       Int
+  vendor_id        Int
+  Carriers         Carriers @relation(fields: [carrier_id], references: [id], onDelete: SetNull)
+  Vendors          Vendors  @relation(fields: [vendor_id], references: [id], onDelete: SetNull)
+
+  @@id([carrier_id, vendor_id])
+}
+
+model Carriers {
+  id                       Int                        @id @default(autoincrement())
+  active                   Boolean                    @default(false)
+  status                   Int
+  type                     String                     @db.VarChar(255)
+  name                     String?                    @db.VarChar(255)
+  short_name               String?                    @db.VarChar(255)
+  legal_name               String                     @db.VarChar(255)
+  web_url                  String?                    @db.VarChar(255)
+  meta                     Json?
+  logo                     String?                    @db.VarChar(255)
+  created_at               DateTime                   @db.Timestamptz(6)
+  updated_at               DateTime                   @db.Timestamptz(6)
+  deleted_at               DateTime?                  @db.Timestamptz(6)
+  contact_id               Int?
+  CarrierCaseTypes         CarrierCaseTypes[]
+  CarrierLineOfBusiness    CarrierLineOfBusiness[]
+  CarrierProcessFlows      CarrierProcessFlows[]
+  CarrierVendorPreferences CarrierVendorPreferences[]
+  Contacts                 Contacts?                  @relation(fields: [contact_id], references: [id])
+  Cases                    Cases[]
+  Claims                   Claims[]
+  InspQuestionsLookups     InspQuestionsLookups[]
+  Stages                   Stages[]
+  UserCarriers             UserCarriers[]
+  VendorCarrier            VendorCarrier[]
+}
+
+model CaseTypes {
+  id               Int                @id @default(autoincrement())
+  code             String             @unique @db.VarChar(255)
+  name             String             @unique @db.VarChar(255)
+  description      String?            @db.VarChar(255)
+  created_at       DateTime           @db.Timestamptz(6)
+  updated_at       DateTime           @db.Timestamptz(6)
+  deleted_at       DateTime?          @db.Timestamptz(6)
+  CarrierCaseTypes CarrierCaseTypes[]
+}
+
+model Cases {
+  id                   Int               @id @default(autoincrement())
+  created_at           DateTime          @db.Timestamptz(6)
+  updated_at           DateTime          @db.Timestamptz(6)
+  deleted_at           DateTime?         @db.Timestamptz(6)
+  carrier_id           Int?
+  carrier_case_type_id Int?
+  predecesor_case_id   Int?
+  Assignments          Assignments[]
+  CarrierCaseTypes     CarrierCaseTypes? @relation(fields: [carrier_case_type_id], references: [id])
+  Carriers             Carriers?         @relation(fields: [carrier_id], references: [id])
+  Cases                Cases?            @relation("CasesToCases", fields: [predecesor_case_id], references: [id])
+  other_Cases          Cases[]           @relation("CasesToCases")
+  Claims               Claims[]
+}
+
+model ClaimContacts {
+  created_at DateTime  @db.Timestamptz(6)
+  updated_at DateTime  @db.Timestamptz(6)
+  deleted_at DateTime? @db.Timestamptz(6)
+  claim_id   Int
+  contact_id Int       @unique(map: "ClaimContacts_contact_id")
+  Claims     Claims    @relation(fields: [claim_id], references: [id], onDelete: Cascade)
+  Contacts   Contacts  @relation(fields: [contact_id], references: [id], onDelete: Cascade)
+
+  @@id([claim_id, contact_id])
+}
+
+model ClaimLossTypeModifiers {
+  id                   Int                    @id @default(autoincrement())
+  title                String                 @unique @db.VarChar(255)
+  description          String?                @db.VarChar(255)
+  active               Boolean                @default(true)
+  created_at           DateTime               @db.Timestamptz(6)
+  updated_at           DateTime               @db.Timestamptz(6)
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  InspQuestionsLookups InspQuestionsLookups[]
+}
+
+model ClaimLossTypePairs {
+  id             Int             @id @default(autoincrement())
+  active         Boolean         @default(true)
+  order          Int             @default(0)
+  created_at     DateTime        @db.Timestamptz(6)
+  updated_at     DateTime        @db.Timestamptz(6)
+  deleted_at     DateTime?       @db.Timestamptz(6)
+  type_id        Int?
+  modifier_id    Int?
+  ClaimLossTypes ClaimLossTypes? @relation(fields: [type_id], references: [id])
+  Claims         Claims[]
+  Stages         Stages[]
+
+  @@unique([type_id, modifier_id], map: "ClaimLossTypePairs_unique_pair")
+}
+
+model ClaimLossTypes {
+  id                   Int                    @id @default(autoincrement())
+  title                String                 @unique @db.VarChar(255)
+  description          String?                @db.VarChar(255)
+  active               Boolean                @default(true)
+  order                Int                    @default(0)
+  created_at           DateTime               @db.Timestamptz(6)
+  updated_at           DateTime               @db.Timestamptz(6)
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  ClaimLossTypePairs   ClaimLossTypePairs[]
+  InspQuestionsLookups InspQuestionsLookups[]
+}
+
+model ClaimStatuses {
+  id                   Int       @id @default(autoincrement())
+  code                 String    @db.VarChar(255)
+  caption              String    @db.VarChar(255)
+  percentage_of_effort Decimal   @db.Decimal
+  created_at           DateTime  @db.Timestamptz(6)
+  updated_at           DateTime  @db.Timestamptz(6)
+  deleted_at           DateTime? @db.Timestamptz(6)
+  Claims               Claims[]
+}
+
+model Claims {
+  id                                          Int                 @id @default(autoincrement())
+  carrier_claim_number                        String              @db.VarChar(255)
+  loss_description                            String
+  loss_date                                   DateTime            @db.Timestamptz(6)
+  meta                                        Json?
+  active                                      Boolean
+  catastrophe_code                            String?             @db.VarChar(255)
+  policy_number                               String              @db.VarChar(255)
+  policy_effective_date                       DateTime?           @db.Timestamptz(6)
+  estimated_effort                            Int
+  created_at                                  DateTime            @db.Timestamptz(6)
+  updated_at                                  DateTime            @db.Timestamptz(6)
+  deleted_at                                  DateTime?           @db.Timestamptz(6)
+  carrier_id                                  Int?
+  incident_id                                 Int?
+  property_id                                 Int?
+  claim_status_id                             Int?
+  adjuster_id                                 Int?
+  line_of_business_id                         Int?
+  policy_data                                 Json?
+  loss_type_pair_id                           Int?
+  independent_adjuster_id                     Int?
+  policy_type_id                              Int?
+  deductible_code_id                          Int?
+  reserve                                     Json?
+  case_id                                     Int?
+  Attachments                                 Attachments[]
+  ClaimContacts                               ClaimContacts[]
+  Users_Claims_adjuster_idToUsers             Users?              @relation("Claims_adjuster_idToUsers", fields: [adjuster_id], references: [id])
+  Carriers                                    Carriers?           @relation(fields: [carrier_id], references: [id])
+  Cases                                       Cases?              @relation(fields: [case_id], references: [id], onUpdate: NoAction)
+  ClaimStatuses                               ClaimStatuses?      @relation(fields: [claim_status_id], references: [id])
+  DeductibleCodes                             DeductibleCodes?    @relation(fields: [deductible_code_id], references: [id])
+  Incidents                                   Incidents?          @relation(fields: [incident_id], references: [id])
+  Users_Claims_independent_adjuster_idToUsers Users?              @relation("Claims_independent_adjuster_idToUsers", fields: [independent_adjuster_id], references: [id])
+  LineOfBusinesses                            LineOfBusinesses?   @relation(fields: [line_of_business_id], references: [id])
+  ClaimLossTypePairs                          ClaimLossTypePairs? @relation(fields: [loss_type_pair_id], references: [id])
+  PolicyTypes                                 PolicyTypes?        @relation(fields: [policy_type_id], references: [id])
+  Properties                                  Properties?         @relation(fields: [property_id], references: [id])
+  Conversations                               Conversations[]
+  Inspections                                 Inspections[]
+  Notes                                       Notes[]
+  Vouchers                                    Vouchers[]
+  Works                                       Works[]
+}
+
+model Contacts {
+  id                                                         Int                     @id @default(autoincrement())
+  description                                                String?                 @db.VarChar(255)
+  insured                                                    Boolean?                @default(false)
+  primary                                                    Boolean?                @default(false)
+  contact_points                                             Json?
+  meta                                                       Json?
+  created_at                                                 DateTime                @db.Timestamptz(6)
+  updated_at                                                 DateTime                @db.Timestamptz(6)
+  deleted_at                                                 DateTime?               @db.Timestamptz(6)
+  full_name                                                  String?                 @db.VarChar(255)
+  user_id                                                    Int?
+  type                                                       enum_Contacts_type      @default(Other)
+  AssignmentTeamMembers                                      AssignmentTeamMembers[]
+  Assignments_Assignments_assigned_organization_idToContacts Assignments[]           @relation("Assignments_assigned_organization_idToContacts")
+  Assignments_Assignments_assigner_organization_idToContacts Assignments[]           @relation("Assignments_assigner_organization_idToContacts")
+  BusinessContacts                                           BusinessContacts[]
+  Businesses                                                 Businesses[]
+  Carriers                                                   Carriers[]
+  ClaimContacts                                              ClaimContacts?
+  Users                                                      Users?                  @relation(fields: [user_id], references: [id])
+  ConversationContacts                                       ConversationContacts[]
+  Conversations                                              Conversations[]
+  Emails                                                     Emails[]
+  Messages                                                   Messages[]
+  Phones                                                     Phones[]
+  Vendors                                                    Vendors[]
+  VideoRooms                                                 VideoRooms[]
+}
+
+model ConversationContacts {
+  created_at      DateTime      @db.Timestamptz(6)
+  updated_at      DateTime      @db.Timestamptz(6)
+  conversation_id Int
+  contact_id      Int
+  Contacts        Contacts      @relation(fields: [contact_id], references: [id], onDelete: Cascade)
+  Conversations   Conversations @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+
+  @@id([conversation_id, contact_id])
+}
+
+model Conversations {
+  id                   Int                    @id @default(autoincrement())
+  phone_number         String?                @db.VarChar(255)
+  created_at           DateTime               @db.Timestamptz(6)
+  updated_at           DateTime               @db.Timestamptz(6)
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  claim_id             Int?
+  is_external          Boolean?               @default(false)
+  owner_contact_id     Int?
+  ConversationContacts ConversationContacts[]
+  Claims               Claims?                @relation(fields: [claim_id], references: [id])
+  Contacts             Contacts?              @relation(fields: [owner_contact_id], references: [id])
+  Messages             Messages[]
+  VideoRooms           VideoRooms[]
+  VoiceCalls           VoiceCalls[]
+}
+
+model DeductibleCodes {
+  id                  Int               @id @default(autoincrement())
+  active              Boolean           @default(true)
+  caption             String            @db.VarChar(255)
+  description         String?           @db.VarChar(255)
+  created_at          DateTime          @db.Timestamptz(6)
+  updated_at          DateTime          @db.Timestamptz(6)
+  deleted_at          DateTime?         @db.Timestamptz(6)
+  line_of_business_id Int?
+  Claims              Claims[]
+  LineOfBusinesses    LineOfBusinesses? @relation(fields: [line_of_business_id], references: [id])
+}
+
+model Deliverables {
+  id             Int                    @id(map: "Deliverables_pkey1") @default(autoincrement())
+  active         Boolean
+  type           enum_Deliverables_type
+  name           String                 @db.VarChar(255)
+  caption        String                 @db.VarChar(255)
+  effective_at   DateTime               @db.Timestamptz(6)
+  render_def     Json?
+  data_def       Json?
+  resolution_def Json?
+  meta           Json?
+  created_at     DateTime               @db.Timestamptz(6)
+  updated_at     DateTime               @db.Timestamptz(6)
+  deleted_at     DateTime?              @db.Timestamptz(6)
+}
+
+model Emails {
+  id         Int              @id @default(autoincrement())
+  caption    String?          @db.VarChar(255)
+  type       enum_Emails_type
+  email      String           @db.VarChar(255)
+  primary    Boolean
+  created_at DateTime         @db.Timestamptz(6)
+  updated_at DateTime         @db.Timestamptz(6)
+  deleted_at DateTime?        @db.Timestamptz(6)
+  contact_id Int?
+  Contacts   Contacts?        @relation(fields: [contact_id], references: [id])
+}
+
+model FnolRuns {
+  id           Int       @id @default(autoincrement())
+  phone_number String    @db.VarChar(255)
+  completed    Boolean
+  info         Json?
+  annotations  String?
+  created_at   DateTime  @db.Timestamptz(6)
+  updated_at   DateTime  @db.Timestamptz(6)
+  deleted_at   DateTime? @db.Timestamptz(6)
+}
+
+model Imports {
+  id                   Int       @default(autoincrement())
+  carrier_claim_number String    @unique @db.VarChar(255)
+  active               Boolean
+  status               String?   @db.VarChar(255)
+  last_msg             String?   @db.VarChar(255)
+  txs                  String?   @db.VarChar(255)
+  original_data        Json?
+  cached_data          Json?
+  claim_id             Int?
+  carrier_id           Int?
+  history              Json?
+  created_at           DateTime  @db.Timestamptz(6)
+  updated_at           DateTime  @db.Timestamptz(6)
+  deleted_at           DateTime? @db.Timestamptz(6)
+
+  @@id([id, carrier_claim_number])
+}
+
+model Incidents {
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(255)
+  description String    @db.VarChar(255)
+  active      Boolean   @default(true)
+  status      String    @db.VarChar(255)
+  created_at  DateTime  @db.Timestamptz(6)
+  updated_at  DateTime  @db.Timestamptz(6)
+  deleted_at  DateTime? @db.Timestamptz(6)
+  Claims      Claims[]
+}
+
+model InspQuestionGroups {
+  id                   Int                    @id @default(autoincrement())
+  active               Boolean                @default(true)
+  name                 String                 @db.VarChar(255)
+  description          String?                @db.VarChar(255)
+  created_at           DateTime               @db.Timestamptz(6)
+  updated_at           DateTime               @db.Timestamptz(6)
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  InspQuestions        InspQuestions[]
+  InspQuestionsLookups InspQuestionsLookups[]
+}
+
+model InspQuestions {
+  id                  Int                            @id @default(autoincrement())
+  active              Boolean                        @default(true)
+  question            String                         @db.VarChar(255)
+  is_required         Boolean                        @default(true)
+  answer_type         enum_InspQuestions_answer_type
+  answer_options      Json?
+  default_answer      Json?
+  answer_assertion    Json?
+  created_at          DateTime                       @db.Timestamptz(6)
+  updated_at          DateTime                       @db.Timestamptz(6)
+  deleted_at          DateTime?                      @db.Timestamptz(6)
+  question_group_id   Int?
+  AreaRegInformations AreaRegInformations[]
+  InspQuestionGroups  InspQuestionGroups?            @relation(fields: [question_group_id], references: [id])
+}
+
+model InspQuestionsLookups {
+  id                         Int                     @id @default(autoincrement())
+  by_catastrophe_flag        Boolean?
+  is_optional                Boolean                 @default(false)
+  created_at                 DateTime                @db.Timestamptz(6)
+  updated_at                 DateTime                @db.Timestamptz(6)
+  deleted_at                 DateTime?               @db.Timestamptz(6)
+  insp_question_group_id     Int?
+  by_carrier_ref             Int?
+  by_line_of_business_ref    Int?
+  by_claim_loss_type_ref     Int?
+  by_claim_loss_modifier_ref Int?
+  by_insp_subject_ref        Int?
+  by_insp_sub_category_ref   Int?
+  Carriers                   Carriers?               @relation(fields: [by_carrier_ref], references: [id], onDelete: Cascade)
+  ClaimLossTypeModifiers     ClaimLossTypeModifiers? @relation(fields: [by_claim_loss_modifier_ref], references: [id], onDelete: Cascade)
+  ClaimLossTypes             ClaimLossTypes?         @relation(fields: [by_claim_loss_type_ref], references: [id], onDelete: Cascade)
+  InspSubjCategories         InspSubjCategories?     @relation(fields: [by_insp_sub_category_ref], references: [id], onDelete: Cascade)
+  InspSubjects               InspSubjects?           @relation(fields: [by_insp_subject_ref], references: [id], onDelete: Cascade)
+  LineOfBusinesses           LineOfBusinesses?       @relation(fields: [by_line_of_business_ref], references: [id], onDelete: Cascade)
+  InspQuestionGroups         InspQuestionGroups?     @relation(fields: [insp_question_group_id], references: [id])
+
+  @@unique([by_carrier_ref, by_catastrophe_flag, by_line_of_business_ref, by_claim_loss_type_ref, by_claim_loss_modifier_ref, by_insp_subject_ref, by_insp_sub_category_ref, insp_question_group_id], map: "InspQuestionsLookups_unique_refers")
+}
+
+model InspSubjCategPairs {
+  id                 Int                 @id @default(autoincrement())
+  active             Boolean             @default(true)
+  order              Int                 @default(0)
+  created_at         DateTime            @db.Timestamptz(6)
+  updated_at         DateTime            @db.Timestamptz(6)
+  deleted_at         DateTime?           @db.Timestamptz(6)
+  subject_id         Int?
+  sub_category_id    Int?
+  Areas              Areas[]
+  InspSubjCategories InspSubjCategories? @relation(fields: [sub_category_id], references: [id])
+  InspSubjects       InspSubjects?       @relation(fields: [subject_id], references: [id])
+
+  @@unique([subject_id, sub_category_id], map: "InspSubjCategPairs_unique_pair")
+}
+
+model InspSubjCategories {
+  id                   Int                    @id @default(autoincrement())
+  title                String                 @unique @db.VarChar(255)
+  description          String?                @db.VarChar(255)
+  active               Boolean                @default(true)
+  created_at           DateTime               @db.Timestamptz(6)
+  updated_at           DateTime               @db.Timestamptz(6)
+  deleted_at           DateTime?              @db.Timestamptz(6)
+  InspQuestionsLookups InspQuestionsLookups[]
+  InspSubjCategPairs   InspSubjCategPairs[]
+}
+
+model InspSubjects {
+  id                    Int                    @id @default(autoincrement())
+  title                 String                 @unique @db.VarChar(255)
+  description           String?                @db.VarChar(255)
+  may_have_measurements Boolean                @default(true)
+  active                Boolean                @default(true)
+  order                 Int                    @default(0)
+  created_at            DateTime               @db.Timestamptz(6)
+  updated_at            DateTime               @db.Timestamptz(6)
+  deleted_at            DateTime?              @db.Timestamptz(6)
+  InspQuestionsLookups  InspQuestionsLookups[]
+  InspSubjCategPairs    InspSubjCategPairs[]
+}
+
+model InspectionTypes {
+  id          Int           @id @default(autoincrement())
+  title       String        @unique @db.VarChar(255)
+  description String?       @db.VarChar(255)
+  active      Boolean       @default(true)
+  order       Int           @default(0)
+  created_at  DateTime      @db.Timestamptz(6)
+  updated_at  DateTime      @db.Timestamptz(6)
+  deleted_at  DateTime?     @db.Timestamptz(6)
+  Inspections Inspections[]
+}
+
+model Inspections {
+  id              Int                      @id @default(autoincrement())
+  version         enum_Inspections_version
+  status          enum_Inspections_status
+  created_at      DateTime                 @db.Timestamptz(6)
+  updated_at      DateTime                 @db.Timestamptz(6)
+  deleted_at      DateTime?                @db.Timestamptz(6)
+  claim_id        Int?
+  type_id         Int?
+  author_user_id  Int?
+  Areas           Areas[]
+  Users           Users?                   @relation(fields: [author_user_id], references: [id])
+  Claims          Claims?                  @relation(fields: [claim_id], references: [id])
+  InspectionTypes InspectionTypes?         @relation(fields: [type_id], references: [id])
+}
+
+model Languages {
+  id            Int             @id @default(autoincrement())
+  active        Boolean         @default(true)
+  caption       String          @db.VarChar(255)
+  created_at    DateTime        @db.Timestamptz(6)
+  updated_at    DateTime        @db.Timestamptz(6)
+  deleted_at    DateTime?       @db.Timestamptz(6)
+  UserLanguages UserLanguages[]
+}
+
+model LineOfBusinesses {
+  id                          Int                           @id @default(autoincrement())
+  caption                     String                        @db.VarChar(255)
+  active                      Boolean                       @default(true)
+  created_at                  DateTime                      @db.Timestamptz(6)
+  updated_at                  DateTime                      @db.Timestamptz(6)
+  deleted_at                  DateTime?                     @db.Timestamptz(6)
+  CarrierLineOfBusiness       CarrierLineOfBusiness[]
+  CarrierProcessFlowScenarios CarrierProcessFlowScenarios[]
+  Claims                      Claims[]
+  DeductibleCodes             DeductibleCodes[]
+  InspQuestionsLookups        InspQuestionsLookups[]
+  LobCoverages                LobCoverages[]
+  PolicyTypes                 PolicyTypes[]
+  Stages                      Stages[]
+}
+
+model LobCoverages {
+  id                  Int               @id @default(autoincrement())
+  active              Boolean           @default(true)
+  code                String            @db.VarChar(255)
+  name                String            @db.VarChar(255)
+  description         String?           @db.VarChar(255)
+  limit_name          String?           @db.VarChar(255)
+  created_at          DateTime          @db.Timestamptz(6)
+  updated_at          DateTime          @db.Timestamptz(6)
+  deleted_at          DateTime?         @db.Timestamptz(6)
+  line_of_business_id Int?
+  LineOfBusinesses    LineOfBusinesses? @relation(fields: [line_of_business_id], references: [id])
+}
+
+model Messages {
+  id               Int            @id @default(autoincrement())
+  sid              String         @db.VarChar(255)
+  phone_number     String         @db.VarChar(255)
+  bulk_id          String?        @db.Uuid
+  created_at       DateTime       @db.Timestamptz(6)
+  updated_at       DateTime       @db.Timestamptz(6)
+  deleted_at       DateTime?      @db.Timestamptz(6)
+  conversation_id  Int?
+  owner_contact_id Int?
+  meta             Json?
+  Conversations    Conversations? @relation(fields: [conversation_id], references: [id])
+  Contacts         Contacts?      @relation(fields: [owner_contact_id], references: [id])
+}
+
+model Notes {
+  id            Int         @id @default(autoincrement())
+  title         String      @db.VarChar(255)
+  description   String
+  sticky        Boolean     @default(false)
+  created_at    DateTime    @db.Timestamptz(6)
+  updated_at    DateTime    @db.Timestamptz(6)
+  deleted_at    DateTime?   @db.Timestamptz(6)
+  claim_id      Int?
+  voice_call_id Int?
+  meta          Json?
+  Claims        Claims?     @relation(fields: [claim_id], references: [id])
+  VoiceCalls    VoiceCalls? @relation(fields: [voice_call_id], references: [id])
+}
+
+model Permissions {
+  id             Int       @id @default(autoincrement())
+  operation_path String    @db.VarChar(255)
+  allowed_roles  Json?
+  context        String    @db.VarChar(255)
+  created_at     DateTime  @db.Timestamptz(6)
+  updated_at     DateTime  @db.Timestamptz(6)
+  deleted_at     DateTime? @db.Timestamptz(6)
+}
+
+model PermissionsContexts {
+  id         Int       @id @default(autoincrement())
+  context    String    @db.VarChar(255)
+  conditions String[]  @default(dbgenerated("(ARRAY[]::character varying[])::character varying(255)[]")) @db.VarChar(255)
+  created_at DateTime  @db.Timestamptz(6)
+  updated_at DateTime  @db.Timestamptz(6)
+  deleted_at DateTime? @db.Timestamptz(6)
+}
+
+model Phones {
+  id            Int               @id @default(autoincrement())
+  type          enum_Phones_type?
+  sms_capable   Boolean           @default(false)
+  country_code  String            @db.VarChar(255)
+  phone_number  String            @db.VarChar(255)
+  ext           Int?
+  vanity_number String?           @db.VarChar(255)
+  caption       String?           @db.VarChar(255)
+  created_at    DateTime          @db.Timestamptz(6)
+  updated_at    DateTime          @db.Timestamptz(6)
+  deleted_at    DateTime?         @db.Timestamptz(6)
+  contact_id    Int?
+  meta          Json?
+  Contacts      Contacts?         @relation(fields: [contact_id], references: [id])
+  Properties    Properties[]
+}
+
+model PolicyTypes {
+  id                  Int               @id @default(autoincrement())
+  active              Boolean           @default(true)
+  caption             String            @unique @db.VarChar(255)
+  description         String?           @db.VarChar(255)
+  reserve_template    Json?
+  created_at          DateTime          @db.Timestamptz(6)
+  updated_at          DateTime          @db.Timestamptz(6)
+  deleted_at          DateTime?         @db.Timestamptz(6)
+  line_of_business_id Int?
+  Claims              Claims[]
+  LineOfBusinesses    LineOfBusinesses? @relation(fields: [line_of_business_id], references: [id])
+}
+
+model ProcessFlows {
+  id                  Int                   @id(map: "ProcessFlows_pkey_1") @default(autoincrement())
+  caption             String                @db.VarChar(255)
+  description         String?               @db.VarChar(255)
+  created_at          DateTime              @db.Timestamptz(6)
+  updated_at          DateTime              @db.Timestamptz(6)
+  deleted_at          DateTime?             @db.Timestamptz(6)
+  CarrierProcessFlows CarrierProcessFlows[]
+}
+
+model Properties {
+  id             Int       @id @default(autoincrement())
+  type           String?   @db.VarChar(255)
+  description    String?   @db.VarChar(255)
+  meta           Json?
+  contact_points Json?
+  created_at     DateTime  @db.Timestamptz(6)
+  updated_at     DateTime  @db.Timestamptz(6)
+  deleted_at     DateTime? @db.Timestamptz(6)
+  address_id     Int?
+  phone_id       Int?
+  Claims         Claims[]
+  Phones         Phones?   @relation(fields: [phone_id], references: [id])
+}
+
+model SequelizeMeta {
+  name String @id @db.VarChar(255)
+}
+
+model Services {
+  id                     Int                      @id @default(autoincrement())
+  caption                String                   @db.VarChar(255)
+  active                 Boolean                  @default(false)
+  created_at             DateTime                 @db.Timestamptz(6)
+  updated_at             DateTime                 @db.Timestamptz(6)
+  deleted_at             DateTime?                @db.Timestamptz(6)
+  UserSpecialityServices UserSpecialityServices[]
+}
+
+model Specialities {
+  id                     Int                      @id @default(autoincrement())
+  caption                String                   @db.VarChar(255)
+  active                 Boolean                  @default(false)
+  created_at             DateTime                 @db.Timestamptz(6)
+  updated_at             DateTime                 @db.Timestamptz(6)
+  deleted_at             DateTime?                @db.Timestamptz(6)
+  UserSpecialityServices UserSpecialityServices[]
+  VendorSpecialty        VendorSpecialty[]
+}
+
+model Stages {
+  id                   Int                 @id @default(autoincrement())
+  catastrophic         Boolean?
+  caption              String              @db.VarChar(255)
+  seq                  Int
+  created_at           DateTime            @db.Timestamptz(6)
+  updated_at           DateTime            @db.Timestamptz(6)
+  deleted_at           DateTime?           @db.Timestamptz(6)
+  carrier_id           Int?
+  line_of_business_id  Int?
+  loss_type_pair_id    Int?
+  percentage_of_effort Decimal?            @default(0) @db.Decimal
+  Carriers             Carriers?           @relation(fields: [carrier_id], references: [id])
+  LineOfBusinesses     LineOfBusinesses?   @relation(fields: [line_of_business_id], references: [id])
+  ClaimLossTypePairs   ClaimLossTypePairs? @relation(fields: [loss_type_pair_id], references: [id])
+  Tasks                Tasks[]
+}
+
+model SubjectDefs {
+  id         Int       @id @default(autoincrement())
+  def        Json?
+  meta       Json?
+  created_at DateTime  @db.Timestamptz(6)
+  updated_at DateTime  @db.Timestamptz(6)
+  deleted_at DateTime? @db.Timestamptz(6)
+}
+
+model SystemReports {
+  id         Int       @id @default(autoincrement())
+  title      String    @db.VarChar(255)
+  url        String    @db.VarChar(255)
+  meta       Json?
+  created_at DateTime  @db.Timestamptz(6)
+  updated_at DateTime  @db.Timestamptz(6)
+  deleted_at DateTime? @db.Timestamptz(6)
+}
+
+model TMP_layout_s {
+  id       Int   @id(map: "TMP_layout_s_pkey_1") @default(autoincrement())
+  merge_id Int?
+  group_id Int?
+  meta     Json?
+}
+
+model TMP_layout_st {
+  id       Int   @id(map: "TMP_layout_st_pkey_1") @default(autoincrement())
+  merge_id Int?
+  group_id Int?
+  meta     Json?
+}
+
+model TMP_stages {
+  id       Int   @id(map: "TMP_stages_pkey_1") @default(autoincrement())
+  merge_id Int?
+  group_id Int?
+  meta     Json?
+}
+
+model TMP_tasks {
+  id       Int   @id(map: "TMP_tasks_pkey_1") @default(autoincrement())
+  merge_id Int?
+  group_id Int?
+  meta     Json?
+}
+
+model TaskActions {
+  id                    Int                     @id @default(autoincrement())
+  active                Boolean                 @default(true)
+  name                  String                  @db.VarChar(255)
+  description           String?                 @db.VarChar(255)
+  created_at            DateTime                @db.Timestamptz(6)
+  updated_at            DateTime                @db.Timestamptz(6)
+  deleted_at            DateTime?               @db.Timestamptz(6)
+  TaskStatusTransitions TaskStatusTransitions[]
+}
+
+model TaskDeliverables {
+  created_at     DateTime @db.Timestamptz(6)
+  updated_at     DateTime @db.Timestamptz(6)
+  deliverable_id Int
+  task_id        Int
+  Tasks          Tasks    @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@id([deliverable_id, task_id])
+}
+
+model TaskStatusTransitions {
+  id                                                                 Int           @id @default(autoincrement())
+  active                                                             Boolean       @default(true)
+  meta                                                               Json?
+  created_at                                                         DateTime      @db.Timestamptz(6)
+  updated_at                                                         DateTime      @db.Timestamptz(6)
+  deleted_at                                                         DateTime?     @db.Timestamptz(6)
+  initial_status_id                                                  Int?
+  on_action_id                                                       Int?
+  next_status_id                                                     Int?
+  seq                                                                Int?          @default(0)
+  TaskStatuses_TaskStatusTransitions_initial_status_idToTaskStatuses TaskStatuses? @relation("TaskStatusTransitions_initial_status_idToTaskStatuses", fields: [initial_status_id], references: [id])
+  TaskStatuses_TaskStatusTransitions_next_status_idToTaskStatuses    TaskStatuses? @relation("TaskStatusTransitions_next_status_idToTaskStatuses", fields: [next_status_id], references: [id])
+  TaskActions                                                        TaskActions?  @relation(fields: [on_action_id], references: [id])
+}
+
+model TaskStatuses {
+  id                                                                          Int                     @id @default(autoincrement())
+  active                                                                      Boolean                 @default(true)
+  name                                                                        String                  @db.VarChar(255)
+  description                                                                 String?                 @db.VarChar(255)
+  created_at                                                                  DateTime                @db.Timestamptz(6)
+  updated_at                                                                  DateTime                @db.Timestamptz(6)
+  deleted_at                                                                  DateTime?               @db.Timestamptz(6)
+  TaskStatusTransitions_TaskStatusTransitions_initial_status_idToTaskStatuses TaskStatusTransitions[] @relation("TaskStatusTransitions_initial_status_idToTaskStatuses")
+  TaskStatusTransitions_TaskStatusTransitions_next_status_idToTaskStatuses    TaskStatusTransitions[] @relation("TaskStatusTransitions_next_status_idToTaskStatuses")
+  Works                                                                       Works[]
+}
+
+model Tasks {
+  id                   Int                @id @default(autoincrement())
+  caption              String             @db.VarChar(255)
+  coverage             String[]           @db.VarChar(255)
+  assignable           Boolean
+  seq                  Int
+  created_at           DateTime           @db.Timestamptz(6)
+  updated_at           DateTime           @db.Timestamptz(6)
+  deleted_at           DateTime?          @db.Timestamptz(6)
+  stage_id             Int?
+  hasWorkflow          String?            @db.VarChar(255)
+  type                 String[]           @db.VarChar
+  percentage_of_effort Decimal?           @default(0) @db.Decimal
+  TaskDeliverables     TaskDeliverables[]
+  Stages               Stages?            @relation(fields: [stage_id], references: [id])
+  Works                Works[]
+}
+
+model UserCarriers {
+  active     Boolean  @default(false)
+  created_at DateTime @db.Timestamptz(6)
+  updated_at DateTime @db.Timestamptz(6)
+  carrier_id Int
+  user_id    Int
+  Carriers   Carriers @relation(fields: [carrier_id], references: [id], onDelete: Cascade)
+  Users      Users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([carrier_id, user_id])
+}
+
+model UserFcmTokens {
+  id         Int       @id @default(autoincrement())
+  token      String    @db.VarChar(255)
+  token_info Json?
+  created_at DateTime  @db.Timestamptz(6)
+  updated_at DateTime  @db.Timestamptz(6)
+  deleted_at DateTime? @db.Timestamptz(6)
+  user_id    Int?
+  Users      Users?    @relation(fields: [user_id], references: [id])
+}
+
+model UserLanguages {
+  primary     Boolean   @default(true)
+  created_at  DateTime  @db.Timestamptz(6)
+  updated_at  DateTime  @db.Timestamptz(6)
+  user_id     Int
+  language_id Int
+  Languages   Languages @relation(fields: [language_id], references: [id], onDelete: Cascade)
+  Users       Users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, language_id])
+}
+
+model UserServiceAreas {
+  for_specialities Int[]    @default([])
+  created_at       DateTime @db.Timestamptz(6)
+  updated_at       DateTime @db.Timestamptz(6)
+  user_id          Int
+  address_id       Int
+  Users            Users    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@id([user_id, address_id])
+}
+
+model UserSpecialityServices {
+  id            Int           @id @default(autoincrement())
+  created_at    DateTime      @db.Timestamptz(6)
+  updated_at    DateTime      @db.Timestamptz(6)
+  deleted_at    DateTime?     @db.Timestamptz(6)
+  service_id    Int?
+  speciality_id Int?
+  user_id       Int?
+  Services      Services?     @relation(fields: [service_id], references: [id])
+  Specialities  Specialities? @relation(fields: [speciality_id], references: [id])
+  Users         Users?        @relation(fields: [user_id], references: [id])
+}
+
+model UserVendors {
+  active     Boolean  @default(false)
+  created_at DateTime @db.Timestamptz(6)
+  updated_at DateTime @db.Timestamptz(6)
+  user_id    Int
+  vendor_id  Int
+  Users      Users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  Vendors    Vendors  @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, vendor_id])
+}
+
+model Users {
+  id                                           Int                      @id @default(autoincrement())
+  full_name                                    String?                  @db.VarChar(255)
+  username                                     String?                  @db.VarChar(255)
+  email                                        String                   @db.VarChar(255)
+  role                                         enum_Users_role
+  speciality                                   enum_Users_speciality?
+  status                                       enum_Users_status        @default(Pending)
+  avatar                                       String?                  @db.VarChar(255)
+  activation_code                              String?                  @db.Uuid
+  is_tc                                        Boolean?                 @default(false)
+  created_at                                   DateTime                 @db.Timestamptz(6)
+  updated_at                                   DateTime                 @db.Timestamptz(6)
+  deleted_at                                   DateTime?                @db.Timestamptz(6)
+  Claims_Claims_adjuster_idToUsers             Claims[]                 @relation("Claims_adjuster_idToUsers")
+  Claims_Claims_independent_adjuster_idToUsers Claims[]                 @relation("Claims_independent_adjuster_idToUsers")
+  Contacts                                     Contacts[]
+  Inspections                                  Inspections[]
+  UserCarriers                                 UserCarriers[]
+  UserFcmTokens                                UserFcmTokens[]
+  UserLanguages                                UserLanguages[]
+  UserServiceAreas                             UserServiceAreas[]
+  UserSpecialityServices                       UserSpecialityServices[]
+  UserVendors                                  UserVendors[]
+  VendorUserPreferences                        VendorUserPreferences[]
+  Works                                        Works[]
+}
+
+model VendorCarrier {
+  created_at DateTime @db.Timestamptz(6)
+  updated_at DateTime @db.Timestamptz(6)
+  carrier_id Int
+  vendor_id  Int
+  Carriers   Carriers @relation(fields: [carrier_id], references: [id], onDelete: Cascade)
+  Vendors    Vendors  @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+
+  @@id([carrier_id, vendor_id])
+}
+
+model VendorServiceAreas {
+  for_specialities Int[]    @default([])
+  created_at       DateTime @db.Timestamptz(6)
+  updated_at       DateTime @db.Timestamptz(6)
+  vendor_id        Int
+  address_id       Int
+  Vendors          Vendors  @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+
+  @@id([vendor_id, address_id])
+}
+
+model VendorSpecialty {
+  created_at    DateTime     @db.Timestamptz(6)
+  updated_at    DateTime     @db.Timestamptz(6)
+  speciality_id Int
+  vendor_id     Int
+  costs         Json?
+  meta          Json?
+  Specialities  Specialities @relation(fields: [speciality_id], references: [id], onDelete: Cascade)
+  Vendors       Vendors      @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+
+  @@id([speciality_id, vendor_id])
+}
+
+model VendorUserPreferences {
+  preference_level Int      @default(0)
+  for_specialities Int[]    @default([])
+  created_at       DateTime @db.Timestamptz(6)
+  updated_at       DateTime @db.Timestamptz(6)
+  user_id          Int
+  vendor_id        Int
+  Users            Users    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  Vendors          Vendors  @relation(fields: [vendor_id], references: [id], onDelete: SetNull)
+
+  @@id([user_id, vendor_id])
+}
+
+model Vendors {
+  id                       Int                        @id @default(autoincrement())
+  active                   Boolean                    @default(false)
+  name                     String?                    @db.VarChar(255)
+  legal_name               String                     @db.VarChar(255)
+  web_url                  String?                    @db.VarChar(255)
+  meta                     Json?
+  logo                     String?                    @db.VarChar(255)
+  created_at               DateTime                   @db.Timestamptz(6)
+  updated_at               DateTime                   @db.Timestamptz(6)
+  deleted_at               DateTime?                  @db.Timestamptz(6)
+  contact_id               Int?
+  CarrierVendorPreferences CarrierVendorPreferences[]
+  UserVendors              UserVendors[]
+  VendorCarrier            VendorCarrier[]
+  VendorServiceAreas       VendorServiceAreas[]
+  VendorSpecialty          VendorSpecialty[]
+  VendorUserPreferences    VendorUserPreferences[]
+  Contacts                 Contacts?                  @relation(fields: [contact_id], references: [id])
+}
+
+model VideoRooms {
+  id               Int            @id @default(autoincrement())
+  sid              String         @db.VarChar(255)
+  name             String         @db.VarChar(255)
+  status           String         @db.VarChar(255)
+  duration         Int?
+  end_time         DateTime?      @db.Timestamptz(6)
+  composition_sid  String?        @db.VarChar(255)
+  composition_url  String?        @db.VarChar(255)
+  created_at       DateTime       @db.Timestamptz(6)
+  updated_at       DateTime       @db.Timestamptz(6)
+  deleted_at       DateTime?      @db.Timestamptz(6)
+  conversation_id  Int?
+  owner_contact_id Int?
+  Conversations    Conversations? @relation(fields: [conversation_id], references: [id])
+  Contacts         Contacts?      @relation(fields: [owner_contact_id], references: [id])
+}
+
+model VoiceCalls {
+  id                   Int                             @id @default(autoincrement())
+  sid                  String                          @unique @db.VarChar(255)
+  from                 String                          @db.VarChar(255)
+  to                   String                          @db.VarChar(255)
+  direction            String                          @db.VarChar(255)
+  status               String                          @db.VarChar(255)
+  duration             Int?
+  merge_status         enum_VoiceCalls_merge_status
+  status_updated_at    DateTime                        @db.Timestamptz(6)
+  recording_type       enum_VoiceCalls_recording_type?
+  recording_url        String?                         @db.VarChar(255)
+  recording_sid        String?                         @db.VarChar(255)
+  recording_duration   Int?
+  api_version          String?                         @db.VarChar(255)
+  caller_name          String?                         @db.VarChar(255)
+  created_at           DateTime                        @db.Timestamptz(6)
+  updated_at           DateTime                        @db.Timestamptz(6)
+  conversation_id      Int?
+  attendant_contact_id Int?
+  meta                 Json?
+  Notes                Notes[]
+  Conversations        Conversations?                  @relation(fields: [conversation_id], references: [id])
+}
+
+model VoucherTypes {
+  id                    Int        @id @default(autoincrement())
+  active                Boolean    @default(true)
+  caption               String     @unique @db.VarChar(255)
+  description           String?    @db.VarChar(255)
+  order                 Int        @default(0)
+  proc_statuses         String[]   @default(dbgenerated("(ARRAY[]::character varying[])::character varying(255)[]")) @db.VarChar(255)
+  order_attributes      Json?
+  redemption_attributes Json?
+  meta                  Json?
+  created_at            DateTime   @db.Timestamptz(6)
+  updated_at            DateTime   @db.Timestamptz(6)
+  deleted_at            DateTime?  @db.Timestamptz(6)
+  Vouchers              Vouchers[]
+}
+
+model Vouchers {
+  id              Int           @id @default(autoincrement())
+  redemption_code String        @db.VarChar(255)
+  cycle_status    String        @db.VarChar(255)
+  cycle_dates     Json?
+  claim_info      Json?
+  order_info      Json?
+  redemption_info Json?
+  activities      Json?
+  meta            Json?
+  created_at      DateTime      @db.Timestamptz(6)
+  updated_at      DateTime      @db.Timestamptz(6)
+  deleted_at      DateTime?     @db.Timestamptz(6)
+  type_id         Int?
+  claim_id        Int?
+  Attachments     Attachments[]
+  Claims          Claims?       @relation(fields: [claim_id], references: [id])
+  VoucherTypes    VoucherTypes? @relation(fields: [type_id], references: [id])
+}
+
+model WorkflowPublications {
+  id                                                           Int       @id @default(autoincrement())
+  data                                                         Json?
+  meta                                                         Json?
+  created_at                                                   DateTime  @db.Timestamptz(6)
+  updated_at                                                   DateTime  @db.Timestamptz(6)
+  deleted_at                                                   DateTime? @db.Timestamptz(6)
+  task_work_id                                                 Int?
+  Works_WorkflowPublications_task_work_idToWorks               Works?    @relation("WorkflowPublications_task_work_idToWorks", fields: [task_work_id], references: [id])
+  Works_Works_assignment_workflow_pub_idToWorkflowPublications Works[]   @relation("Works_assignment_workflow_pub_idToWorkflowPublications")
+}
+
+model Works {
+  id                                                                          Int                    @id @default(autoincrement())
+  checked                                                                     Boolean?
+  note                                                                        String?
+  active                                                                      Boolean?
+  created_at                                                                  DateTime               @db.Timestamptz(6)
+  updated_at                                                                  DateTime               @db.Timestamptz(6)
+  deleted_at                                                                  DateTime?              @db.Timestamptz(6)
+  claim_id                                                                    Int?
+  task_id                                                                     Int?
+  assignment_user_id                                                          Int?
+  status_id                                                                   Int?
+  scheduled_date                                                              DateTime?              @db.Timestamptz(6)
+  last_known_location                                                         Json?
+  meta                                                                        Json?
+  assignment_workflow_pub_id                                                  Int?
+  assignment_id                                                               Int?
+  team_member_id                                                              Int?
+  WorkflowPublications_WorkflowPublications_task_work_idToWorks               WorkflowPublications[] @relation("WorkflowPublications_task_work_idToWorks")
+  Assignments                                                                 Assignments?           @relation(fields: [assignment_id], references: [id], onUpdate: NoAction)
+  Users                                                                       Users?                 @relation(fields: [assignment_user_id], references: [id])
+  WorkflowPublications_Works_assignment_workflow_pub_idToWorkflowPublications WorkflowPublications?  @relation("Works_assignment_workflow_pub_idToWorkflowPublications", fields: [assignment_workflow_pub_id], references: [id], onUpdate: NoAction)
+  Claims                                                                      Claims?                @relation(fields: [claim_id], references: [id])
+  TaskStatuses                                                                TaskStatuses?          @relation(fields: [status_id], references: [id])
+  Tasks                                                                       Tasks?                 @relation(fields: [task_id], references: [id])
+  AssignmentTeamMembers                                                       AssignmentTeamMembers? @relation(fields: [team_member_id], references: [id], onUpdate: NoAction)
+}
+
+model all_open_claims {
+  loc_id                           String? @db.VarChar(50)
+  desk_adjuster                    String? @db.VarChar(255)
+  inspector                        String? @db.VarChar(255)
+  insured                          String? @db.VarChar(255)
+  insured_phone                    String? @db.VarChar(50)
+  carrier_claim_number             String? @db.VarChar(50)
+  policy_number                    String? @db.VarChar(50)
+  risk_address_1                   String? @db.VarChar(255)
+  risk_city                        String? @db.VarChar(255)
+  risk_zip                         String? @db.VarChar(50)
+  ni_contacted                     String? @db.VarChar(50)
+  ni_contact_next_action           String? @db.VarChar(50)
+  ni_contacted_date                String? @db.VarChar(50)
+  inspection_scheduled             String? @db.VarChar(50)
+  inspection_scheduled_next_action String? @db.VarChar(50)
+  inspection_scheduled_date        String? @db.VarChar(50)
+  inspection_uploaded              String? @db.VarChar(50)
+  inspection_notes                 String?
+  ni_contacted_note                String?
+  id                               Int     @id @default(autoincrement())
+}
+
+model coffee {
+  id                    Int                     @id(map: "PK_4d27239ee0b99a491ad806aec46") @default(autoincrement())
+  name                  String                  @db.VarChar
+  description           String?                 @db.VarChar
+  brand                 String                  @db.VarChar
+  recommendations       Int                     @default(0)
+  coffee_flavors_flavor coffee_flavors_flavor[]
+}
+
+model coffee_flavors_flavor {
+  coffeeId Int
+  flavorId Int
+  flavor   flavor @relation(fields: [flavorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_25642975c6f620d570c635f418d")
+  coffee   coffee @relation(fields: [coffeeId], references: [id], onDelete: Cascade, map: "FK_9cb98a3799afc95cf71fdb1c4f9")
+
+  @@id([coffeeId, flavorId], map: "PK_64cde86968c8b440e3c63626e80")
+  @@index([flavorId], map: "IDX_25642975c6f620d570c635f418")
+  @@index([coffeeId], map: "IDX_9cb98a3799afc95cf71fdb1c4f")
+}
+
+model event {
+  id      Int    @id(map: "PK_30c2f3bbaf6d34a55f8ae6e4614") @default(autoincrement())
+  type    String @db.VarChar
+  name    String @db.VarChar
+  payload Json   @db.Json
+
+  @@index([name], map: "IDX_b535fbe8ec6d832dde22065ebd")
+}
+
+model flavor {
+  id                    Int                     @id(map: "PK_934fe79b3d8131395c29a040ee5") @default(autoincrement())
+  name                  String                  @db.VarChar
+  coffee_flavors_flavor coffee_flavors_flavor[]
+}
+
+/// We could not retrieve columns for the underlying table. Either it has none or you are missing rights to see them. Please check your privileges.
+// model test {
+// }
+
+enum enum_Activities_activity_type {
+  NOTE
+  ATTACHMENT
+  STATUS_UPDATE
+  CLAIM_UPDATED
+  CHECK_IN
+  CHECK_OUT
+  RECEIVED
+  CLOSED
+  ERROR
+  ASSIGNED_TO
+  COMMUNICATED
+  COVERAGE_A_UPDATE
+  COVERAGE_B_UPDATE
+  COVERAGE_C_UPDATE
+  COVERAGE_D_UPDATE
+  COVERAGE_E_UPDATE
+  COVERAGE_F_UPDATE
+  PHONE_CALL
+  CLAIM_STATUS_UPDATED
+}
+
+enum enum_Addresses_type {
+  WORK
+  HOME
+}
+
+enum enum_Attachments_attachment_type {
+  DOC
+  IMAGE
+  VIDEO
+  AUDIO
+  OTHER
+}
+
+enum enum_Attachments_status {
+  INGESTED
+  PROCESSED
+  TRANSCODED
+  PUBLISHED
+  ERROR
+  UPLOADED
+  NEW
+}
+
+enum enum_Contacts_type {
+  Insured
+  Additional_Insured @map("Additional Insured")
+  Family_Member      @map("Family Member")
+  Claimant
+  Agent
+  Mortgage
+  Lienholder
+  Public_Adjuster    @map("Public Adjuster")
+  Power_of_Attorney  @map("Power of Attorney")
+  Attorney
+  TPA_Representative @map("TPA Representative")
+  Umpire
+  Opposing_Appraiser @map("Opposing Appraiser")
+  Other
+}
+
+enum enum_Deliverables_type {
+  TaskForm
+  Upload
+}
+
+enum enum_Emails_type {
+  WORK
+  PERSONAL
+}
+
+enum enum_InspQuestions_answer_type {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  SINGLE_TEXT_LINE
+  MULTIPLE_TEXT_LINE
+}
+
+enum enum_Inspections_status {
+  Draft
+  Published
+}
+
+enum enum_Inspections_version {
+  Preliminary
+  Interim
+  Final
+  Supplemental
+}
+
+enum enum_Phones_type {
+  WORK
+  PERSONAL
+  HOME
+}
+
+enum enum_UserNotifications_status {
+  NEW
+  SEEN
+  OPENED
+}
+
+enum enum_Users_role {
+  SUPER_USER    @map("SUPER-USER")
+  ADMINISTRATOR
+  MANAGER
+  SUPERVISOR
+  EXAMINER
+  INSPECTOR
+  ADJUSTER
+  TRAINER
+  VOUCHER_USER  @map("VOUCHER-USER")
+}
+
+enum enum_Users_speciality {
+  Painters
+  Fencers
+  Landscapers
+  General_Contractor                   @map("General Contractor")
+  Roofer
+  Ladder_Assist                        @map("Ladder Assist")
+  Electrician
+  HVAC
+  Plumber
+  Temp_Repair                          @map("Temp Repair")
+  Board_Up_Company                     @map("Board Up Company")
+  Water_Mitigation                     @map("Water Mitigation")
+  Content_Restoration                  @map("Content Restoration")
+  Dry_Cleaners                         @map("Dry Cleaners")
+  Cause_and_Origin                     @map("Cause and Origin")
+  Leak_Detection                       @map("Leak Detection")
+  Engineer
+  Electronics_Technician               @map("Electronics Technician")
+  Attorney
+  DAT__Data_Acquisition_Technician_    @map("DAT (Data Acquisition Technician)")
+  DAP__Data_Acquisition_Pro_           @map("DAP (Data Acquisition Pro)")
+  DTI__Data_Thermal_Imaging_           @map("DTI (Data Thermal Imaging)")
+  ADS__Aerial_Data_Specialist___Drone_ @map("ADS (Aerial Data Specialist - Drone)")
+}
+
+enum enum_Users_status {
+  Pending
+  Active
+  Inactive
+}
+
+enum enum_VoiceCalls_merge_status {
+  QUEUED
+  HOLD
+  IN_PROGRESS
+  RECORDING
+  COMPLETED
+  NOT_PROCESSED
+}
+
+enum enum_VoiceCalls_recording_type {
+  CALL
+  VOICEMAIL
+}
